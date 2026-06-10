@@ -13,6 +13,7 @@
 <header>
     <a class="logo" href="/">SHOP<span>.</span></a>
     <span class="header-meta">КАТАЛОГ</span>
+    <button class="btn-cart">Корзина</button>
 </header>
 
 <div class="wrapper">
@@ -61,7 +62,7 @@
                                 —
                             <?php endif; ?>
                         </span>
-                        <a href="#" class="btn-cart">+</a>
+                        <a href="#" class="btn-cart" onclick="onAddToCartClick()">+</a>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -71,5 +72,6 @@
 
 <footer>© 2026 Shop</footer>
 
+<script src="/js/main.js"></script>
 </body>
 </html>
