@@ -19,10 +19,10 @@
     <aside>
         <p class="sidebar-title">Категории</p>
         <ul class="cat-list">
-            <li><a href="/" class="active"><span class="cat-dot"></span>Все товары</a></li>
+            <li><a href="/" class="<?= $activeCategoryId === null ? 'active' : '' ?>"><span class="cat-dot"></span>Все товары</a></li>
             <?php foreach ($categories as $cat): ?>
                 <li>
-                    <a href="/?category=<?= $cat['categoryId'] ?>">
+                    <a href="/?category=<?= $cat['categoryId'] ?>" class="<?= $activeCategoryId === $cat['categoryId'] ? 'active' : '' ?>">
                         <span class="cat-dot"></span>
                         <?= htmlspecialchars($cat['name']) ?>
                     </a>
@@ -44,7 +44,7 @@
                         <span class="tag tag-sale">SALE</span>
                     <?php endif; ?>
 
-                    <div class="card-img">🛍️</div>
+                    <div class="card-img"></div>
 
                     <div>
                         <div class="card-name"><?= htmlspecialchars($product['name']) ?></div>

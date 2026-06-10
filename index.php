@@ -7,5 +7,5 @@ require_once __DIR__ . '/src/Controller.php';
 
 $repo       = new CatalogRepository();
 $controller = new CatalogController($repo);
-
-$controller->showProducts();
+$categoryId = isset($_GET['category']) ? (int)$_GET['category'] : null;
+$controller->showProducts($categoryId);
