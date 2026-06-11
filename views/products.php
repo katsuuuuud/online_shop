@@ -13,7 +13,7 @@
 <header>
     <a class="logo" href="/">SHOP<span>.</span></a>
     <span class="header-meta">КАТАЛОГ</span>
-    <button class="btn-cart">Корзина</button>
+    <a class="btn-cart" href="/?page=cart">Корзина</a>
 </header>
 
 <div class="wrapper">
@@ -62,7 +62,7 @@
                                 —
                             <?php endif; ?>
                         </span>
-                        <a href="#" class="btn-cart" onclick="onAddToCartClick()">+</a>
+                        <button type="button" class="btn-cart add-to-cart" data-product-id="<?= (int)$product['productId'] ?>">+</button>
                     </div>
                 </div>
             <?php endforeach; ?>
