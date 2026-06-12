@@ -24,7 +24,7 @@ class CatalogController {
 
         $activeCategoryId = $categoryId;
 
-        require __DIR__ . '/../views/products.php';
+        require __DIR__ . '/../../views/products.php';
     }
 
     public function addToCart(int $productId, int $quantity): void {

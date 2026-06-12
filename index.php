@@ -5,13 +5,31 @@ require_once __DIR__ . '/src/repositories/CatalogRepositoryInterface.php';
 require_once __DIR__ . '/src/repositories/CatalogRepository.php';
 require_once __DIR__ . '/src/repositories/CartRepositoryInterface.php';
 require_once __DIR__ . '/src/repositories/CartRepository.php';
-require_once __DIR__ . '/src/Controller.php';
-require_once __DIR__ . '/src/CartController.php';
+require_once __DIR__ . '/src/repositories/OrderRepositoryInterface.php';
+require_once __DIR__ . '/src/repositories/OrderRepository.php';
+require_once __DIR__ . '/src/services/OrderService.php';
+require_once __DIR__ . '/src/controllers/CatalogController.php';
+require_once __DIR__ . '/src/controllers/CartController.php';
+require_once __DIR__ . '/src/controllers/OrderController.php';
 
 $catalogRepo = new CatalogRepository();
 $catalogController = new CatalogController($catalogRepo);
 $cartRepo = new CartRepository();
 $cartController = new CartController($cartRepo, $catalogRepo);
+$orderController = new OrderController(new OrderService(new OrderRepository()));
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) === '/order/create') {
+    $input = $_POST;
+    if (!$input) {
+        $input = json_decode(file_get_contents('php://input'), true) ?: [];
+    }
+
+    $result = $orderController->submitOrder($input);
+
+    header('Content-Type: application/json');
+    echo json_encode($result);
+    exit;
+}
 
 if (isset($_GET['action']) && $_GET['action'] === 'add_to_cart') {
     $productId = (int)($_GET['productId'] ?? 0);

@@ -36,6 +36,6 @@ class CartController {
 
     public function show(): void {
         $items = $this->items();
-        require __DIR__ . '/../views/cart.php';
+        require __DIR__ . '/../../views/cart.php';
     }
 }
