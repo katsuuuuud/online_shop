@@ -16,7 +16,7 @@ $catalogRepo = new CatalogRepository();
 $catalogController = new CatalogController($catalogRepo);
 $cartRepo = new CartRepository();
 $cartController = new CartController($cartRepo, $catalogRepo);
-$orderController = new OrderController(new OrderService(new OrderRepository()));
+$orderController = new OrderController(new OrderService(new OrderRepository(), new CartRepository()));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) === '/order/create') {
     $input = $_POST;

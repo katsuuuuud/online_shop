@@ -4,20 +4,17 @@ require_once __DIR__ . '/../Database.php';
 
 class OrderService
 {
-    private const CART_COOKIE_NAME = 'market_cart';
-
     private OrderRepositoryInterface $orderRepository;
+    private CartRepositoryInterface $cartRepository;
 
-    public function __construct(OrderRepositoryInterface $orderRepository)
-    {
+    public function __construct(OrderRepositoryInterface $orderRepository, CartRepositoryInterface $cartRepository) {
         $this->orderRepository = $orderRepository;
-    }
+        $this->cartRepository = $cartRepository;
+}
 
     public function createOrder(array $orderData): array
     {
-        $cartItems = isset($_COOKIE[self::CART_COOKIE_NAME])
-            ? json_decode($_COOKIE[self::CART_COOKIE_NAME], true) ?: []
-            : [];
+        $cartItems = $this->cartRepository->getItems();
 
         if (!$cartItems) {
             return ['success' => false, 'message' => 'Корзина пуста.'];
@@ -52,7 +49,7 @@ class OrderService
 
             $orderId = $this->orderRepository->saveOrder($customerId, (int)round($totalAmount), $address);
             $this->orderRepository->saveOrderItems($orderId, $customerId, $cartItems);
-            $this->orderRepository->clearCart();
+            $this->cartRepository->clear();
 
             $pdo->commit();
 
