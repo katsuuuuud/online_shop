@@ -24,7 +24,7 @@
         <?php if (empty($items)): ?>
             <p>Корзина пуста.</p>
         <?php else: ?>
-            <ul style="list-style:none; display:flex; flex-direction:column; gap:12px; width: 300px"">
+            <ul style="list-style:none; display:flex; flex-direction:column; gap:12px; width:300px;">
                 <?php foreach ($items as $item): ?>
                     <li style="padding:10px 20px; border:1px solid #2a2a2a; border-radius:10px; background:#161616; display:flex; justify-content:space-between; align-items:center; gap:12px;">
                         <span>
