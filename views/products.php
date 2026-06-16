@@ -13,7 +13,7 @@
 <header>
     <a class="logo" href="/">SHOP<span>.</span></a>
     <span class="header-meta">КАТАЛОГ</span>
-    <a class="btn-cart" href="/?page=cart">Корзина</a>
+    <a class="btn-cart" href="/cart">Корзина</a>
 </header>
 
 <div class="wrapper">

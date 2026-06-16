@@ -1,29 +1,43 @@
 function onAddToCartClick(productId) {
-    fetch('/?action=add_to_cart&productId=' + encodeURIComponent(productId))
-        .then(() => {
-            alert('Товар добавлен в корзину');
+    const formData = new FormData();
+    formData.append('productId', productId);
+
+    fetch('/cart/add', {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                alert('Товар добавлен в корзину');
+            }
         });
 }
 
 function onRemoveFromCartClick(productId) {
-    fetch('/?page=cart&remove=' + encodeURIComponent(productId))
+    const formData = new FormData();
+    formData.append('productId', productId);
+
+    fetch('/cart/remove', {
+        method: 'POST',
+        body: formData
+    })
         .then(() => {
             window.location.reload();
         });
 }
 
 function onClearCartClick() {
-    fetch('/?page=cart&clear=1')
+    fetch('/cart/clear', {
+        method: 'POST',
+    })
         .then(() => {
             window.location.reload();
         });
 }
 
 function onMakeOrderClick() {
-    fetch('/?page=cart&make_order=1')
-        .then(() => {
-            document.querySelector('.order-form-modal').style.display = 'flex';
-        });
+    document.querySelector('.order-form-modal').style.display = 'flex';
 }
 
 function onSubmitOrderForm(event) {
@@ -48,8 +62,6 @@ function onSubmitOrderForm(event) {
             alert('Не удалось отправить заказ.');
         });
 }
-
-
 
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.add-to-cart').forEach(button => {

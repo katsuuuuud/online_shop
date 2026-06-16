@@ -51,7 +51,6 @@
                         <button type="submit" class="btn-cart" style="margin-top:16px;">Подтвердить заказ</button>
                     </form>
                 </div>
-
             </div>
         <?php endif; ?>
     </main>

@@ -19,23 +19,30 @@ class Router
             return;
         }
 
-        if (isset($_GET['action']) && $_GET['action'] === 'add_to_cart') {
-            $this->c->cartController->add((int)($_GET['productId'] ?? 0), 1);
+        if ($method === 'POST' && $path === '/cart/add') {
+            $productId = (int)($_POST['productId'] ?? 0);
+            $this->c->cartController->add($productId, 1);
+            header('Content-Type: application/json');
             echo json_encode(['ok' => true]);
             return;
         }
 
-        if (isset($_GET['page']) && $_GET['page'] === 'cart') {
-            if (isset($_GET['remove'])) {
-                $this->c->cartController->remove((int)$_GET['remove']);
-                header('Location: /?page=cart');
-                return;
-            }
-            if (isset($_GET['clear'])) {
-                $this->c->cartController->clear();
-                header('Location: /?page=cart');
-                return;
-            }
+        if ($method === 'POST' && $path === '/cart/remove') {
+            $productId = (int)($_POST['productId'] ?? 0);
+            $this->c->cartController->remove($productId);
+            header('Content-Type: application/json');
+            echo json_encode(['ok' => true]);
+            return;
+        }
+
+        if ($method === 'POST' && $path === '/cart/clear') {
+            $this->c->cartController->clear();
+            header('Content-Type: application/json');
+            echo json_encode(['ok' => true]);
+            return;
+        }
+
+        if ($method === 'GET' && $path === '/cart') {
             $this->c->cartController->show();
             return;
         }
