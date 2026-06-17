@@ -10,12 +10,14 @@ class OrderRepository implements OrderRepositoryInterface
     {
         $pdo = Database::getInstance();
 
-        $stmt = $pdo->prepare('INSERT INTO users (name, email, phone, address) VALUES (?, ?, ?, ?)');
+        $stmt = $pdo->prepare('INSERT INTO users (name, email, phone, address, password) VALUES (?, ?, ?, ?, ?)');
         $stmt->execute([
             $customerData['name'],
             $customerData['email'],
             $customerData['phone'],
             $customerData['address'],
+            $customerData['password'],
+
         ]);
 
         return (int)$pdo->lastInsertId();
@@ -62,5 +64,13 @@ class OrderRepository implements OrderRepositoryInterface
     {
         setcookie(self::CART_COOKIE_NAME, '', time() - 3600, '/');
         unset($_COOKIE[self::CART_COOKIE_NAME]);
+    }
+
+    public function getOrdersByCustomer(int $customerId): array
+    {
+        $pdo = Database::getInstance();
+        $stmt = $pdo->prepare('SELECT * FROM orders WHERE customer_id = ? ORDER BY created_at DESC');
+        $stmt->execute([$customerId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

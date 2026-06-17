@@ -14,6 +14,7 @@ function onAddToCartClick(productId) {
         });
 }
 
+
 function onRemoveFromCartClick(productId) {
     const formData = new FormData();
     formData.append('productId', productId);

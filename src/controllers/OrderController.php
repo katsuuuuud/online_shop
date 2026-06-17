@@ -9,8 +9,8 @@ class OrderController
         $this->orderService = $orderService;
     }
 
-    public function submitOrder(array $orderData): array
+    public function submitOrder(?array $user, array $orderData): array
     {
-        return $this->orderService->createOrder($orderData);
+        return $this->orderService->createOrder($user, $orderData);
     }
 }

@@ -9,4 +9,6 @@ interface OrderRepositoryInterface
     public function saveOrderItems(int $orderId, int $customerId, array $cartItems): void;
 
     public function clearCart(): void;
+
+    public function getOrdersByCustomer(int $customerId): array;
 }

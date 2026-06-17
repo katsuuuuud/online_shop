@@ -10,10 +10,17 @@
 </head>
 <body>
 
+<?php $user = $_SESSION['user'] ?? null; ?>
 <header>
     <a class="logo" href="/">SHOP<span>.</span></a>
     <span class="header-meta">КАТАЛОГ</span>
     <a class="btn-cart" href="/cart">Корзина</a>
+    <?php if ($user): ?>
+        <a class="btn-cart" href="/profile">Кабинет</a>
+        <a class="btn-cart" href="/auth/logout">Выйти</a>
+    <?php else: ?>
+        <a class="btn-cart" href="/auth/login">Войти</a>
+    <?php endif; ?>
 </header>
 
 <div class="wrapper">

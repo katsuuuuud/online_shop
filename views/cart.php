@@ -9,10 +9,17 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+<?php $user = $_SESSION['user'] ?? null; ?>
 <header>
     <a class="logo" href="/">SHOP<span>.</span></a>
-    <span class="header-meta">КОРЗИНА</span>
+    <span class="header-meta"><?= $user ? 'Привет, ' . htmlspecialchars($user['name']) : 'КОРЗИНА' ?></span>
     <a class="btn-cart" href="/">Назад</a>
+    <?php if ($user): ?>
+        <a class="btn-cart" href="/profile">Кабинет</a>
+        <a class="btn-cart" href="/auth/logout">Выйти</a>
+    <?php else: ?>
+        <a class="btn-cart" href="/auth/login?next=/cart">Войти</a>
+    <?php endif; ?>
 </header>
 
 <div class="wrapper">
@@ -36,22 +43,23 @@
             </ul>
             <div style="margin-top:16px;">
                 <button type="button" class="btn-cart clear-cart">Очистить корзину</button>
-                <button type="button" class="btn-cart make-order">Оформить заказ</button>
+                <?php if ($user): ?>
+                    <button type="button" class="btn-cart make-order">Оформить заказ</button>
+                <?php else: ?>
+                    <a class="btn-cart" href="/auth/login?next=/cart">Войти для оформления</a>
+                <?php endif; ?>
             </div>
-            <div class="order-form-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
-                <div style="background:#fff; padding:20px; border-radius:10px; width:300px;">
-                    <h2>Оформление заказа</h2>
-                    <form id="order-form">
-                        <div style="display:flex; flex-direction:column; gap:12px;">
-                            <input type="text" name="name" placeholder="Ваше имя" required>
-                            <input type="email" name="email" placeholder="Email" required>
-                            <input type="text" name="address" placeholder="Адрес доставки" required>
-                            <input type="tel" name="phone" placeholder="Телефон" required>
-                        </div>
-                        <button type="submit" class="btn-cart" style="margin-top:16px;">Подтвердить заказ</button>
-                    </form>
+            <?php if ($user): ?>
+                <div class="order-form-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
+                    <div style="background:#fff; padding:20px; border-radius:10px; width:300px;">
+                        <h2>Оформление заказа</h2>
+                        <p>Ваш заказ будет создан для <?= htmlspecialchars($user['name']) ?>.</p>
+                        <form id="order-form">
+                            <button type="submit" class="btn-cart" style="margin-top:16px;">Подтвердить заказ</button>
+                        </form>
+                    </div>
                 </div>
-            </div>
+            <?php endif; ?>
         <?php endif; ?>
     </main>
 </div>
