@@ -11,6 +11,7 @@
 <body>
 
 <?php $user = $_SESSION['user'] ?? null; ?>
+
 <header>
     <a class="logo" href="/">SHOP<span>.</span></a>
     <span class="header-meta">КАТАЛОГ</span>
@@ -27,10 +28,15 @@
     <aside>
         <p class="sidebar-title">Категории</p>
         <ul class="cat-list">
-            <li><a href="/" class="<?= $activeCategoryId === null ? 'active' : '' ?>"><span class="cat-dot"></span>Все товары</a></li>
+            <li>
+                <a href="/" class="<?= $activeCategoryId === null ? 'active' : '' ?>">
+                    <span class="cat-dot"></span>Все товары
+                </a>
+            </li>
             <?php foreach ($categories as $cat): ?>
                 <li>
-                    <a href="/?category=<?= $cat['categoryId'] ?>" class="<?= $activeCategoryId === $cat['categoryId'] ? 'active' : '' ?>">
+                    <a href="/?category=<?= $cat['categoryId'] ?>"
+                       class="<?= $activeCategoryId === $cat['categoryId'] ? 'active' : '' ?>">
                         <span class="cat-dot"></span>
                         <?= htmlspecialchars($cat['name']) ?>
                     </a>
@@ -56,9 +62,7 @@
 
                     <div>
                         <div class="card-name"><?= htmlspecialchars($product['name']) ?></div>
-                        <div style="font-size:.8rem; color:var(--muted); margin-top:4px;">
-                            <?= htmlspecialchars($product['category_name']) ?>
-                        </div>
+                        <div class="card-category"><?= htmlspecialchars($product['category_name']) ?></div>
                     </div>
 
                     <div class="card-footer">
@@ -69,7 +73,8 @@
                                 —
                             <?php endif; ?>
                         </span>
-                        <button type="button" class="btn-cart add-to-cart" data-product-id="<?= (int)$product['productId'] ?>">+</button>
+                        <button type="button" class="btn-cart add-to-cart"
+                                data-product-id="<?= (int)$product['productId'] ?>">+</button>
                     </div>
                 </div>
             <?php endforeach; ?>

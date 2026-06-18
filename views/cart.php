@@ -10,6 +10,7 @@
 </head>
 <body>
 <?php $user = $_SESSION['user'] ?? null; ?>
+
 <header>
     <a class="logo" href="/">SHOP<span>.</span></a>
     <span class="header-meta"><?= $user ? 'Привет, ' . htmlspecialchars($user['name']) : 'КОРЗИНА' ?></span>
@@ -31,17 +32,17 @@
         <?php if (empty($items)): ?>
             <p>Корзина пуста.</p>
         <?php else: ?>
-            <ul style="list-style:none; display:flex; flex-direction:column; gap:12px; width:300px;">
+            <ul class="cart-list">
                 <?php foreach ($items as $item): ?>
-                    <li style="padding:10px 20px; border:1px solid #2a2a2a; border-radius:10px; background:#161616; display:flex; justify-content:space-between; align-items:center; gap:12px;">
-                        <span>
-                            <?= htmlspecialchars($item['name']) ?> — <?= (int)$item['quantity'] ?> шт.
-                        </span>
-                        <button type="button" class="btn-cart remove-from-cart" data-product-id="<?= (int)$item['productId'] ?>">Удалить</button>
+                    <li class="cart-item">
+                        <span><?= htmlspecialchars($item['name']) ?> — <?= (int)$item['quantity'] ?> шт.</span>
+                        <button type="button" class="btn-cart remove-from-cart"
+                                data-product-id="<?= (int)$item['productId'] ?>">Удалить</button>
                     </li>
                 <?php endforeach; ?>
             </ul>
-            <div style="margin-top:16px;">
+
+            <div class="cart-actions">
                 <button type="button" class="btn-cart clear-cart">Очистить корзину</button>
                 <?php if ($user): ?>
                     <button type="button" class="btn-cart make-order">Оформить заказ</button>
@@ -49,13 +50,14 @@
                     <a class="btn-cart" href="/auth/login?next=/cart">Войти для оформления</a>
                 <?php endif; ?>
             </div>
+
             <?php if ($user): ?>
-                <div class="order-form-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
-                    <div style="background:#fff; padding:20px; border-radius:10px; width:300px;">
+                <div class="cart-modal order-form-modal">
+                    <div class="cart-modal-inner">
                         <h2>Оформление заказа</h2>
                         <p>Ваш заказ будет создан для <?= htmlspecialchars($user['name']) ?>.</p>
                         <form id="order-form">
-                            <button type="submit" class="btn-cart" style="margin-top:16px;">Подтвердить заказ</button>
+                            <button type="submit" class="btn-cart">Подтвердить заказ</button>
                         </form>
                     </div>
                 </div>
