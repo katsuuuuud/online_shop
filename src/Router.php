@@ -9,20 +9,15 @@ class Router
         $method = $_SERVER['REQUEST_METHOD'];
         $path   = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 
-        // ── API routes (всегда JSON) ──────────────────────────────────────
         if (str_starts_with($path, '/api/')) {
             header('Content-Type: application/json');
             $this->dispatchApi($method, $path);
             return;
         }
 
-        // ── HTML routes ───────────────────────────────────────────────────
         $this->dispatchWeb($method, $path);
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // REST API
-    // ─────────────────────────────────────────────────────────────────────
     private function dispatchApi(string $method, string $path): void
     {
         match (true) {
@@ -47,7 +42,6 @@ class Router
         };
     }
 
-    // ── Cart endpoints ────────────────────────────────────────────────────
 
     private function apiCartIndex(): void
     {
@@ -97,7 +91,6 @@ class Router
         echo json_encode(['data' => [], 'total' => 0]);
     }
 
-    // ── Auth endpoints ────────────────────────────────────────────────────
 
     private function apiAuthLogin(): void
     {
@@ -132,7 +125,6 @@ class Router
         echo json_encode(['data' => null]);
     }
 
-    // ── Order endpoints ───────────────────────────────────────────────────
 
     private function apiOrderCreate(): void
     {
@@ -154,7 +146,6 @@ class Router
         echo json_encode(['data' => ['orderId' => $result['orderId']]]);
     }
 
-    // ── Profile endpoints ─────────────────────────────────────────────────
 
     private function apiProfileUpdate(): void
     {
@@ -175,9 +166,6 @@ class Router
         echo json_encode(['data' => $_SESSION['user']]);
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // HTML pages
-    // ─────────────────────────────────────────────────────────────────────
     private function dispatchWeb(string $method, string $path): void
     {
         match (true) {
@@ -257,12 +245,8 @@ class Router
         $this->c->catalogController->showProducts($categoryId);
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // Helpers
-    // ─────────────────────────────────────────────────────────────────────
     private function jsonBody(): array
     {
-        // Принимаем и JSON и form-data
         $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
         if (str_contains($contentType, 'application/json')) {
             return json_decode(file_get_contents('php://input'), true) ?: [];

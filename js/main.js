@@ -1,6 +1,3 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// API client
-// ─────────────────────────────────────────────────────────────────────────────
 
 const api = {
     async request(method, path, body = null) {
@@ -22,11 +19,6 @@ const api = {
     patch:  (path, body)  => api.request('PATCH',  path, body),
     delete: (path, body)  => api.request('DELETE', path, body),
 };
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Toast notifications (вместо alert)
-// ─────────────────────────────────────────────────────────────────────────────
-
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast toast--${type}`;
@@ -39,11 +31,6 @@ function showToast(message, type = 'success') {
         toast.addEventListener('transitionend', () => toast.remove());
     }, 3000);
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Cart (страница /cart) — обновление DOM без reload
-// ─────────────────────────────────────────────────────────────────────────────
-
 function updateCartDOM(items, total) {
     const list    = document.querySelector('.cart-list');
     const summary = document.querySelector('.cart-summary');
@@ -69,7 +56,6 @@ function updateCartDOM(items, total) {
         summary.textContent = `Итого: ${total.toFixed(2)}`;
     }
 
-    // Перевесить обработчики на новые кнопки
     bindRemoveButtons();
 }
 
@@ -103,18 +89,12 @@ async function onClearCart() {
     }
 }
 
-// Счётчик корзины в хедере (если есть элемент .cart-count)
 function updateCartCount(count) {
     document.querySelectorAll('.cart-count').forEach(el => {
         el.textContent = count;
         el.hidden = count === 0;
     });
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Auth — AJAX login / register без перезагрузки страницы
-// ─────────────────────────────────────────────────────────────────────────────
-
 async function onAuthSubmit(event) {
     event.preventDefault();
 
@@ -146,10 +126,6 @@ function showError(form, message) {
     box.textContent = message;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Order — AJAX оформление заказа
-// ─────────────────────────────────────────────────────────────────────────────
-
 function onMakeOrder() {
     document.querySelector('.order-form-modal').style.display = 'flex';
 }
@@ -165,7 +141,6 @@ async function onSubmitOrderForm(event) {
         showToast(`Заказ #${data.orderId} успешно оформлен!`);
         document.querySelector('.order-form-modal').style.display = 'none';
 
-        // Обновить корзину в DOM без reload
         updateCartDOM([], 0);
         updateCartCount(0);
     } catch (e) {
@@ -173,10 +148,6 @@ async function onSubmitOrderForm(event) {
         submitBtn.disabled = false;
     }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Profile — AJAX обновление профиля
-// ─────────────────────────────────────────────────────────────────────────────
 
 async function onProfileUpdate(event) {
     event.preventDefault();
@@ -196,50 +167,34 @@ async function onProfileUpdate(event) {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Bind helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
 function bindRemoveButtons() {
     document.querySelectorAll('.remove-from-cart').forEach(btn => {
-        // Клонируем, чтобы не дублировать слушатели
         const fresh = btn.cloneNode(true);
         btn.replaceWith(fresh);
         fresh.addEventListener('click', () => onRemoveFromCart(+fresh.dataset.productId));
     });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Init
-// ─────────────────────────────────────────────────────────────────────────────
-
 document.addEventListener('DOMContentLoaded', () => {
-    // Каталог: добавить в корзину
     document.querySelectorAll('.add-to-cart').forEach(btn => {
         btn.addEventListener('click', () => onAddToCart(+btn.dataset.productId));
     });
 
-    // Корзина: удалить позицию
     bindRemoveButtons();
 
-    // Корзина: очистить
     document.querySelector('.clear-cart')
         ?.addEventListener('click', onClearCart);
 
-    // Корзина: кнопка «Оформить заказ»
     document.querySelector('.make-order')
         ?.addEventListener('click', onMakeOrder);
 
-    // Корзина: форма подтверждения заказа
     document.getElementById('order-form')
         ?.addEventListener('submit', onSubmitOrderForm);
 
-    // Auth: форма логина / регистрации
     document.querySelectorAll('.auth-form').forEach(form => {
         form.addEventListener('submit', onAuthSubmit);
     });
-
-    // Profile: форма обновления данных
+    
     document.querySelector('.profile-form')
         ?.addEventListener('submit', onProfileUpdate);
 });
