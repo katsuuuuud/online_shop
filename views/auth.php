@@ -51,7 +51,7 @@ if ($user) {
         <?php if ($mode === 'login'): ?>
             <div class="auth-section">
                 <h2>Вход</h2>
-                <form action="/auth/login" method="post" class="auth-form">
+                <form action="/auth/login" method="post" class="auth-form" data-mode="login">
                     <input type="hidden" name="next" value="<?= htmlspecialchars($next) ?>">
                     <input type="email" name="email" placeholder="Email" required>
                     <input type="password" name="password" placeholder="Пароль" required>
@@ -61,7 +61,7 @@ if ($user) {
         <?php else: ?>
             <div class="auth-section">
                 <h2>Регистрация</h2>
-                <form action="/auth/register" method="post" class="auth-form">
+                <form action="/auth/register" method="post" class="auth-form" data-mode="register">
                     <input type="hidden" name="next" value="<?= htmlspecialchars($next) ?>">
                     <input type="text" name="name" placeholder="Имя" required>
                     <input type="email" name="email" placeholder="Email" required>
@@ -76,5 +76,6 @@ if ($user) {
 </main>
 
 <footer>© 2026 Shop</footer>
+<script src="/js/main.js"></script>
 </body>
 </html>

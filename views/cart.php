@@ -32,6 +32,7 @@
         <?php if (empty($items)): ?>
             <p>Корзина пуста.</p>
         <?php else: ?>
+        <div class="cart-content">
             <ul class="cart-list">
                 <?php foreach ($items as $item): ?>
                     <li class="cart-item">
@@ -50,6 +51,7 @@
                     <a class="btn-cart" href="/auth/login?next=/cart">Войти для оформления</a>
                 <?php endif; ?>
             </div>
+        </div><?php /* .cart-content */ ?>
 
             <?php if ($user): ?>
                 <div class="cart-modal order-form-modal">
