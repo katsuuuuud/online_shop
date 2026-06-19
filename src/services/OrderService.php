@@ -1,17 +1,11 @@
 <?php
 
-require_once __DIR__ . '/../Database.php';
-
 class OrderService
 {
-    private OrderRepositoryInterface $orderRepository;
-    private CartRepositoryInterface $cartRepository;
-
-    public function __construct(OrderRepositoryInterface $orderRepository, CartRepositoryInterface $cartRepository)
-    {
-        $this->orderRepository = $orderRepository;
-        $this->cartRepository = $cartRepository;
-    }
+    public function __construct(
+        private OrderRepositoryInterface $orderRepository,
+        private CartRepositoryInterface  $cartRepository,
+    ) {}
 
     public function createOrder(?array $user, array $orderData): array
     {
@@ -19,23 +13,20 @@ class OrderService
             return ['success' => false, 'message' => 'Требуется войти в систему.'];
         }
 
-        $cartItems = $this->cartRepository->getItems();
-        if (!$cartItems) {
-            return ['success' => false, 'message' => 'Корзина пуста.'];
-        }
-
         $userId = (int)($user['id'] ?? $user['userId'] ?? 0);
         if ($userId <= 0) {
             return ['success' => false, 'message' => 'Не удалось определить пользователя.'];
         }
 
-        $address = trim((string)($user['address'] ?? ''));
-        $totalAmount = 0.0;
-        foreach ($cartItems as $item) {
-            $price = (float)($item['price'] ?? 0);
-            $quantity = (int)($item['quantity'] ?? 0);
-            $totalAmount += $price * $quantity;
+        $cartItems = $this->cartRepository->getItems();
+        if (!$cartItems) {
+            return ['success' => false, 'message' => 'Корзина пуста.'];
         }
+
+        $address     = trim((string)($user['address'] ?? ''));
+        $totalAmount = array_sum(
+            array_map(fn($item) => (float)($item['price'] ?? 0) * (int)($item['quantity'] ?? 0), $cartItems)
+        );
 
         $pdo = Database::getInstance();
 
@@ -46,16 +37,11 @@ class OrderService
             $this->cartRepository->clear();
             $pdo->commit();
 
-            return [
-                'success' => true,
-                'message' => 'Заказ успешно оформлен.',
-                'orderId' => $orderId,
-            ];
+            return ['success' => true, 'message' => 'Заказ успешно оформлен.', 'orderId' => $orderId];
         } catch (Throwable $e) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
-
             return ['success' => false, 'message' => 'Не удалось оформить заказ: ' . $e->getMessage()];
         }
     }

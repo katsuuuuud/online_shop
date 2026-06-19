@@ -18,231 +18,47 @@ class Router
         $this->dispatchWeb($method, $path);
     }
 
+
     private function dispatchApi(string $method, string $path): void
     {
         match (true) {
-            // Cart
-            $method === 'GET'    && $path === '/api/cart'        => $this->apiCartIndex(),
-            $method === 'POST'   && $path === '/api/cart'        => $this->apiCartAdd(),
-            $method === 'DELETE' && $path === '/api/cart'        => $this->apiCartClear(),
-            $method === 'DELETE' && str_starts_with($path, '/api/cart/') => $this->apiCartRemove($path),
-
-            // Auth
-            $method === 'POST'   && $path === '/api/auth/login'    => $this->apiAuthLogin(),
-            $method === 'POST'   && $path === '/api/auth/register' => $this->apiAuthRegister(),
-            $method === 'DELETE' && $path === '/api/auth/session'  => $this->apiAuthLogout(),
-
-            // Orders
-            $method === 'POST'   && $path === '/api/orders'        => $this->apiOrderCreate(),
-
-            // Profile
-            $method === 'PATCH'  && $path === '/api/profile'       => $this->apiProfileUpdate(),
+            $method === 'GET'    && $path === '/api/cart'                        => $this->c->cartController->apiIndex(),
+            $method === 'POST'   && $path === '/api/cart'                        => $this->c->cartController->apiAdd($this->jsonBody()),
+            $method === 'DELETE' && $path === '/api/cart'                        => $this->c->cartController->apiClear(),
+            $method === 'DELETE' && str_starts_with($path, '/api/cart/')         => $this->c->cartController->apiRemove($path),
+            $method === 'POST'   && $path === '/api/auth/login'                  => $this->c->authController->apiLogin($this->jsonBody()),
+            $method === 'POST'   && $path === '/api/auth/register'               => $this->c->authController->apiRegister($this->jsonBody()),
+            $method === 'DELETE' && $path === '/api/auth/session'                => $this->c->authController->apiLogout(),
+            $method === 'POST'   && $path === '/api/orders'                      => $this->c->orderController->apiCreate($this->jsonBody()),
+            $method === 'PATCH'  && $path === '/api/profile'                     => $this->c->profileController->apiUpdate($this->jsonBody()),
 
             default => $this->apiNotFound(),
         };
     }
 
 
-    private function apiCartIndex(): void
-    {
-        $items = $this->c->cartController->items();
-        $total = array_sum(array_map(fn($i) => $i['price'] * $i['quantity'], $items));
-        echo json_encode(['data' => array_values($items), 'total' => $total]);
-    }
-
-    private function apiCartAdd(): void
-    {
-        $body      = $this->jsonBody();
-        $productId = (int)($body['productId'] ?? 0);
-        $quantity  = max(1, (int)($body['quantity'] ?? 1));
-
-        if ($productId <= 0) {
-            $this->fail('productId обязателен', 422);
-            return;
-        }
-
-        $this->c->cartController->add($productId, $quantity);
-        $items = $this->c->cartController->items();
-        $total = array_sum(array_map(fn($i) => $i['price'] * $i['quantity'], $items));
-
-        http_response_code(201);
-        echo json_encode(['data' => array_values($items), 'total' => $total]);
-    }
-
-    private function apiCartRemove(string $path): void
-    {
-        $productId = (int)substr($path, strlen('/api/cart/'));
-
-        if ($productId <= 0) {
-            $this->fail('Неверный productId', 422);
-            return;
-        }
-
-        $this->c->cartController->remove($productId);
-        $items = $this->c->cartController->items();
-        $total = array_sum(array_map(fn($i) => $i['price'] * $i['quantity'], $items));
-
-        echo json_encode(['data' => array_values($items), 'total' => $total]);
-    }
-
-    private function apiCartClear(): void
-    {
-        $this->c->cartController->clear();
-        echo json_encode(['data' => [], 'total' => 0]);
-    }
-
-
-    private function apiAuthLogin(): void
-    {
-        $body   = $this->jsonBody();
-        $result = $this->c->authController->login($body);
-
-        if (!$result['success']) {
-            $this->fail($result['message'], 401);
-            return;
-        }
-
-        echo json_encode(['data' => $_SESSION['user']]);
-    }
-
-    private function apiAuthRegister(): void
-    {
-        $body   = $this->jsonBody();
-        $result = $this->c->authController->register($body);
-
-        if (!$result['success']) {
-            $this->fail($result['message'], 422);
-            return;
-        }
-
-        http_response_code(201);
-        echo json_encode(['data' => $_SESSION['user']]);
-    }
-
-    private function apiAuthLogout(): void
-    {
-        $this->c->authController->logout();
-        echo json_encode(['data' => null]);
-    }
-
-
-    private function apiOrderCreate(): void
-    {
-        $user = $_SESSION['user'] ?? null;
-
-        if (!$user) {
-            $this->fail('Требуется авторизация', 401);
-            return;
-        }
-
-        $result = $this->c->orderController->submitOrder($user, $this->jsonBody());
-
-        if (!$result['success']) {
-            $this->fail($result['message'], 422);
-            return;
-        }
-
-        http_response_code(201);
-        echo json_encode(['data' => ['orderId' => $result['orderId']]]);
-    }
-
-
-    private function apiProfileUpdate(): void
-    {
-        $user = $_SESSION['user'] ?? null;
-
-        if (!$user) {
-            $this->fail('Требуется авторизация', 401);
-            return;
-        }
-
-        $result = $this->c->profileController->update($this->jsonBody(), $user);
-
-        if (!$result['success']) {
-            $this->fail($result['message'], 422);
-            return;
-        }
-
-        echo json_encode(['data' => $_SESSION['user']]);
-    }
-
     private function dispatchWeb(string $method, string $path): void
     {
         match (true) {
-            $method === 'GET'  && $path === '/cart'           => $this->c->cartController->show(),
-            $method === 'GET'  && $path === '/auth/logout'    => $this->c->authController->logout(),
-            $method === 'GET'  && $path === '/auth'           => $this->redirectToLogin(),
-            $method === 'GET'  && $path === '/auth/login'     => $this->renderAuth('login'),
-            $method === 'GET'  && $path === '/auth/register'  => $this->renderAuth('register'),
-            $method === 'POST' && $path === '/auth/login'     => $this->handleWebAuthLogin(),
-            $method === 'POST' && $path === '/auth/register'  => $this->handleWebAuthRegister(),
-            $method === 'GET'  && $path === '/profile'        => $this->renderProfile(),
-            default            => $this->renderCatalog(),
+            $method === 'GET'  && $path === '/cart'          => $this->c->cartController->show(),
+            $method === 'GET'  && $path === '/auth/logout'   => $this->c->authController->logout(),
+            $method === 'GET'  && $path === '/auth'          => $this->redirectToLogin(),
+            $method === 'GET'  && $path === '/auth/login'    => $this->c->authController->showLogin(),
+            $method === 'GET'  && $path === '/auth/register' => $this->c->authController->showRegister(),
+            $method === 'POST' && $path === '/auth/login'    => $this->c->authController->handleLogin($_POST),
+            $method === 'POST' && $path === '/auth/register' => $this->c->authController->handleRegister($_POST),
+            $method === 'GET'  && $path === '/profile'        => $this->c->profileController->show(),
+            $method === 'POST' && $path === '/profile'        => $this->c->profileController->handleUpdate($_POST),
+            default                                           => $this->c->catalogController->showProducts(),
         };
     }
+
 
     private function redirectToLogin(): void
     {
         $next   = $_GET['next'] ?? '/';
         $target = '/auth/login' . ($next !== '/' ? '?next=' . urlencode($next) : '');
         header('Location: ' . $target);
-    }
-
-    private function renderAuth(string $mode): void
-    {
-        $next = $_GET['next'] ?? '/';
-        require __DIR__ . '/../views/auth.php';
-    }
-
-    private function handleWebAuthLogin(): void
-    {
-        $result = $this->c->authController->login($_POST);
-        $next = $result['next'] ?? '/';
-
-        if ($result['success']) {
-            header('Location: ' . $next);
-            return;
-        }
-
-        $query = http_build_query([
-            'next' => $next !== '/' ? $next : '/', 
-            'error' => $result['message'],
-        ]);
-        header('Location: /auth/login?' . $query);
-    }
-
-    private function handleWebAuthRegister(): void
-    {
-        $result = $this->c->authController->register($_POST);
-        $next = $result['next'] ?? '/';
-
-        if ($result['success']) {
-            header('Location: ' . $next);
-            return;
-        }
-
-        $query = http_build_query([
-            'next' => $next !== '/' ? $next : '/', 
-            'error' => $result['message'],
-        ]);
-        header('Location: /auth/register?' . $query);
-    }
-
-    private function renderProfile(): void
-    {
-        $user = $_SESSION['user'] ?? null;
-        if (!$user) {
-            header('Location: /auth/login?next=/profile');
-            return;
-        }
-        $tab = $_GET['tab'] ?? 'info';
-        $this->c->profileController->show($user, $tab);
-    }
-
-    private function renderCatalog(): void
-    {
-        $categoryId = isset($_GET['category']) ? (int)$_GET['category'] : null;
-        $this->c->catalogController->showProducts($categoryId);
     }
 
     private function jsonBody(): array
@@ -254,14 +70,9 @@ class Router
         return $_POST ?: [];
     }
 
-    private function fail(string $message, int $code = 400): void
-    {
-        http_response_code($code);
-        echo json_encode(['error' => $message]);
-    }
-
     private function apiNotFound(): void
     {
-        $this->fail('Маршрут не найден', 404);
+        http_response_code(404);
+        echo json_encode(['error' => 'Маршрут не найден']);
     }
 }

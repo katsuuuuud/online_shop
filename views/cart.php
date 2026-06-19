@@ -57,7 +57,6 @@
                 <div class="cart-modal order-form-modal">
                     <div class="cart-modal-inner">
                         <h2>Оформление заказа</h2>
-                        <p>Ваш заказ будет создан для <?= htmlspecialchars($user['name']) ?>.</p>
                         <form id="order-form">
                             <button type="submit" class="btn-cart">Подтвердить заказ</button>
                         </form>

@@ -63,7 +63,7 @@ $tab     = $_GET['tab']     ?? 'info';
                 <?php endif; ?>
             <?php else: ?>
                 <h2>Профиль</h2>
-                <form action="/profile/update" method="post" class="profile-form">
+                <form action="/profile" method="post" class="profile-form">
                     <input type="hidden" name="tab" value="info">
                     <label>
                         Имя
@@ -89,5 +89,6 @@ $tab     = $_GET['tab']     ?? 'info';
 </main>
 
 <footer>© 2026 Shop</footer>
+<script src="/js/main.js"></script>
 </body>
 </html>

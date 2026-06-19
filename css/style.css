@@ -136,7 +136,6 @@ main { padding: 40px 0 0 40px; }
   padding: 2px 10px;
 }
 
-/* ── Сетка товаров ── */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -213,7 +212,6 @@ main { padding: 40px 0 0 40px; }
   color: #0d0d0d;
 }
 
-/* ── Метки SALE / NEW / HIT ── */
 .tag {
   position: absolute;
   top: 12px; right: 12px;
@@ -228,7 +226,6 @@ main { padding: 40px 0 0 40px; }
 .tag-new  { background: #3b82f6;        color: #fff; }
 .tag-sale { background: var(--accent2); color: #fff; }
 
-/* ── Подвал сайта ── */
 footer {
   text-align: center;
   padding: 24px;
@@ -237,7 +234,6 @@ footer {
   border-top: 1px solid var(--border);
 }
 
-/* ── Уведомления (alert) ── */
 .alert {
   margin-bottom: 16px;
   padding: 12px 16px;
@@ -246,7 +242,6 @@ footer {
 .alert-error   { color: #c53030; background: #ffe7e7; }
 .alert-success { color: #276749; background: #e6fffa; }
 
-/* ── Auth ── */
 .auth-page main {
   padding: 30px;
   display: flex;
@@ -293,7 +288,6 @@ footer {
   gap: 12px;
 }
 
-/* ── Cart ── */
 .cart-list {
   list-style: none;
   display: flex;
@@ -399,7 +393,6 @@ footer {
   padding: 18px;
 }
 
-/* ── Card category label ── */
 .card-category {
   font-size: .8rem;
   color: var(--muted);
@@ -414,7 +407,6 @@ footer {
   main { padding: 24px 0 0; }
 }
 
-/* ── Toast notifications ── */
 .toast {
   position: fixed;
   bottom: 32px;

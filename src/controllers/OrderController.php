@@ -2,15 +2,28 @@
 
 class OrderController
 {
-    private OrderService $orderService;
+    public function __construct(private OrderService $orderService) {}
 
-    public function __construct(OrderService $orderService)
-    {
-        $this->orderService = $orderService;
-    }
 
-    public function submitOrder(?array $user, array $orderData): array
+    public function apiCreate(array $body): void
     {
-        return $this->orderService->createOrder($user, $orderData);
+        $user = $_SESSION['user'] ?? null;
+
+        if (!$user) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Требуется авторизация']);
+            return;
+        }
+
+        $result = $this->orderService->createOrder($user, $body);
+
+        if (!$result['success']) {
+            http_response_code(422);
+            echo json_encode(['error' => $result['message']]);
+            return;
+        }
+
+        http_response_code(201);
+        echo json_encode(['data' => ['orderId' => $result['orderId']]]);
     }
 }
