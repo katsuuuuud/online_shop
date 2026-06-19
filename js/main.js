@@ -138,7 +138,7 @@ async function onSubmitOrderForm(event) {
 
     try {
         const { data } = await api.post('/api/orders', {});
-        showToast(`Заказ #${data.orderId} успешно оформлен!`);
+        showToast(`Заказ успешно оформлен!`);
         document.querySelector('.order-form-modal').style.display = 'none';
 
         updateCartDOM([], 0);

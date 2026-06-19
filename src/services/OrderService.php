@@ -32,6 +32,32 @@ class OrderService
 
         try {
             $pdo->beginTransaction();
+
+            foreach ($cartItems as $item) {
+                $productId = (int)($item['productId'] ?? 0);
+                $quantity  = (int)($item['quantity'] ?? 0);
+
+                if ($productId <= 0 || $quantity <= 0) {
+                    throw new RuntimeException('Некорректные данные товара в корзине.');
+                }
+
+                $stmt = $pdo->prepare(
+                    'UPDATE product_audit
+                     SET quantity = quantity - :quantity
+                     WHERE product_id = :id
+                       AND quantity >= :min_quantity'
+                );
+                $stmt->execute([
+                    'id' => $productId,
+                    'quantity' => $quantity,
+                    'min_quantity' => $quantity,
+                ]);
+
+                if ($stmt->rowCount() === 0) {
+                    throw new RuntimeException('Извините, товар "' . ($item['name'] ?? 'товар') . '" закончился');
+                }
+            }
+
             $orderId = $this->orderRepository->saveOrder($userId, (int)round($totalAmount), $address);
             $this->orderRepository->saveOrderItems($orderId, $userId, $cartItems);
             $this->cartRepository->clear();
