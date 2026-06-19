@@ -19,6 +19,6 @@ class Container
         $this->cartController    = new CartController($cartRepo, $catalogRepo);
         $this->orderController   = new OrderController(new OrderService($orderRepo, $cartRepo));
         $this->profileController = new ProfileController($authRepo, $orderRepo);
-        $this->authController    = new AuthController($authRepo);
+        $this->authController    = new AuthController($authRepo, $cartRepo);
     }
 }

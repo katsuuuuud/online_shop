@@ -2,7 +2,10 @@
 
 class AuthController
 {
-    public function __construct(private AuthRepositoryInterface $authRepository) {}
+    public function __construct(
+        private AuthRepositoryInterface $authRepository,
+        private CartRepositoryInterface $cartRepository,
+    ) {}
 
 
     public function apiLogin(array $body): void
@@ -120,6 +123,7 @@ class AuthController
             return ['success' => false, 'message' => 'Неверный email или пароль.', 'next' => $next];
         }
 
+        $this->cartRepository->mergeGuestCartToUser((int)$user['userId'], $_COOKIE[CartRepository::GUEST_COOKIE] ?? null);
         $_SESSION['user'] = $user;
         return ['success' => true, 'message' => 'Вы успешно вошли.', 'next' => $next];
     }
@@ -153,6 +157,7 @@ class AuthController
         }
 
         unset($user['password']);
+        $this->cartRepository->mergeGuestCartToUser((int)$user['userId'], $_COOKIE[CartRepository::GUEST_COOKIE] ?? null);
         $_SESSION['user'] = $user;
 
         return ['success' => true, 'message' => 'Регистрация прошла успешно.', 'next' => $next];
@@ -171,5 +176,6 @@ class AuthController
             );
         }
         session_destroy();
+        $this->cartRepository->resetGuestCartAfterLogout();
     }
 }
