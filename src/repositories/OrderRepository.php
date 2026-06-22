@@ -29,7 +29,7 @@ class OrderRepository implements OrderRepositoryInterface
                 $customerId,
                 (int)($item['quantity']  ?? 0),
                 (float)($item['price']   ?? 0),
-                strtoupper((string)($item['currency'] ?? 'RUB')),
+                strtoupper((string)($item['currency'] ?? '')),
             ]);
         }
     }
@@ -38,7 +38,15 @@ class OrderRepository implements OrderRepositoryInterface
     {
         $pdo  = Database::getInstance();
         $stmt = $pdo->prepare(
-            'SELECT * FROM orders WHERE customer_id = ? ORDER BY created_at DESC'
+            'SELECT o.*, (
+                 SELECT currency
+                 FROM order_items oi
+                 WHERE oi.order_id = o.orderId
+                 LIMIT 1
+             ) AS currency
+             FROM orders o
+             WHERE o.customer_id = ?
+             ORDER BY o.created_at DESC'
         );
         $stmt->execute([$customerId]);
 

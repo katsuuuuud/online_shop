@@ -54,7 +54,7 @@ $tab     = $_GET['tab']     ?? 'info';
                             <li class="order-card">
                                 <div><strong>Заказ #</strong><?= htmlspecialchars($order['orderId'] ?? $order['id'] ?? '') ?></div>
                                 <div><strong>Дата:</strong> <?= htmlspecialchars($order['created_at'] ?? '') ?></div>
-                                <div><strong>Сумма:</strong> <?= number_format((float)($order['amount'] ?? 0), 2) ?> <?= htmlspecialchars($order['currency'] ?? 'RUB') ?></div>
+                                <div><strong>Сумма:</strong> <?= number_format((float)($order['amount'] ?? 0), 2) ?> <?= htmlspecialchars($order['currency'] ?? '') ?></div>
                                 <div><strong>Статус:</strong> <?= htmlspecialchars($order['status'] ?? '—') ?></div>
                                 <div><strong>Адрес:</strong> <?= htmlspecialchars($order['address'] ?? '') ?></div>
                             </li>
