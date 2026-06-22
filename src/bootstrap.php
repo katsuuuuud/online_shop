@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/RedisClient.php';
 require_once __DIR__ . '/repositories/AuthRepositoryInterface.php';
 require_once __DIR__ . '/repositories/AuthRepository.php';
 require_once __DIR__ . '/repositories/CatalogRepositoryInterface.php';

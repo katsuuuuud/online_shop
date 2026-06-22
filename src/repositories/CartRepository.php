@@ -2,54 +2,103 @@
 
 class CartRepository implements CartRepositoryInterface {
     public const GUEST_COOKIE = 'guest_cart_id';
-    private const COOKIE_LIFETIME = 2592000; // 30 days
+    private const COOKIE_LIFETIME  = 2592000;
+    private const GUEST_KEY_PREFIX = 'cart:guest:';
 
-    private PDO $db;
+    private PDO   $db;
+    private Redis $redis;
 
     public function __construct()
     {
-        $this->db = Database::getInstance();
+        $this->db    = Database::getInstance();
+        $this->redis = RedisClient::getInstance()->getRedis();
     }
 
     public function getItems(): array
     {
-        $cart = $this->getCurrentCartRow();
-        return $cart ? $this->decodeItems($cart['items']) : [];
+        $user = $_SESSION['user'] ?? null;
+        if ($user && isset($user['userId'])) {
+            $cartId = $this->ensureCartForUser((int)$user['userId']);
+            return $this->getItemsByCartId($cartId);
+        }
+
+        return $this->getGuestItems();
     }
 
     public function addItem(int $productId, string $name, float $price, string $currency, int $quantity = 1): array
     {
-        $items = $this->getItems();
-        $key = (string)$productId;
+        $user = $_SESSION['user'] ?? null;
+
+        if ($user && isset($user['userId'])) {
+            $cartId = $this->ensureCartForUser((int)$user['userId']);
+
+            $stmt = $this->db->prepare(
+                'INSERT INTO cart_items (cart_id, product_id, quantity, price, currency)
+                 VALUES (:cart_id, :product_id, :quantity, :price, :currency)
+                 ON DUPLICATE KEY UPDATE quantity = quantity + :quantity2'
+            );
+            $stmt->execute([
+                'cart_id'    => $cartId,
+                'product_id' => $productId,
+                'quantity'   => $quantity,
+                'price'      => $price,
+                'currency'   => $currency,
+                'quantity2'  => $quantity,
+            ]);
+
+            return $this->getItemsByCartId($cartId);
+        }
+
+        $items = $this->getGuestItems();
+        $key   = (string)$productId;
 
         if (isset($items[$key])) {
             $items[$key]['quantity'] += $quantity;
         } else {
             $items[$key] = [
                 'productId' => $productId,
-                'name' => $name,
-                'price' => $price,
-                'currency' => $currency,
-                'quantity' => $quantity,
+                'name'      => $name,
+                'price'     => $price,
+                'currency'  => $currency,
+                'quantity'  => $quantity,
             ];
         }
 
-        $this->saveItemsToCurrentCart($items);
+        $this->saveGuestItems($items);
         return $items;
     }
 
     public function removeItem(int $productId): array
     {
-        $items = $this->getItems();
-        unset($items[(string)$productId]);
+        $user = $_SESSION['user'] ?? null;
 
-        $this->saveItemsToCurrentCart($items);
+        if ($user && isset($user['userId'])) {
+            $cartId = $this->ensureCartForUser((int)$user['userId']);
+
+            $stmt = $this->db->prepare('DELETE FROM cart_items WHERE cart_id = ? AND product_id = ?');
+            $stmt->execute([$cartId, $productId]);
+
+            return $this->getItemsByCartId($cartId);
+        }
+
+        $items = $this->getGuestItems();
+        unset($items[(string)$productId]);
+        $this->saveGuestItems($items);
         return $items;
     }
 
     public function clear(): void
     {
-        $this->saveItemsToCurrentCart([]);
+        $user = $_SESSION['user'] ?? null;
+
+        if ($user && isset($user['userId'])) {
+            $cartId = $this->ensureCartForUser((int)$user['userId']);
+            $stmt = $this->db->prepare('DELETE FROM cart_items WHERE cart_id = ?');
+            $stmt->execute([$cartId]);
+            return;
+        }
+
+        $this->saveGuestItems([]);
     }
 
     public function mergeGuestCartToUser(int $userId, ?string $guestId): void
@@ -58,27 +107,30 @@ class CartRepository implements CartRepositoryInterface {
             return;
         }
 
-        $guestCart = $this->getCartByGuestId($guestId);
-        if (!$guestCart) {
-            $this->clearGuestCookie();
-            return;
-        }
+        $guestItems = $this->getGuestItemsByGuestId($guestId);
 
-        $guestItems = $this->decodeItems($guestCart['items']);
-        $userCart   = $this->getCartByUserId($userId);
-        $userItems  = $this->decodeItems($userCart['items']);
+        if ($guestItems) {
+            $cartId = $this->ensureCartForUser($userId);
 
-        foreach ($guestItems as $productId => $item) {
-            $key = (string)$productId;
-            if (isset($userItems[$key])) {
-                $userItems[$key]['quantity'] += $item['quantity'];
-            } else {
-                $userItems[$key] = $item;
+            $stmt = $this->db->prepare(
+                'INSERT INTO cart_items (cart_id, product_id, quantity, price, currency)
+                 VALUES (:cart_id, :product_id, :quantity, :price, :currency)
+                 ON DUPLICATE KEY UPDATE quantity = quantity + :quantity2'
+            );
+
+            foreach ($guestItems as $item) {
+                $stmt->execute([
+                    'cart_id'    => $cartId,
+                    'product_id' => $item['productId'],
+                    'quantity'   => $item['quantity'],
+                    'price'      => $item['price'],
+                    'currency'   => $item['currency'],
+                    'quantity2'  => $item['quantity'],
+                ]);
             }
         }
 
-        $this->saveItemsToCartId((int)$userCart['cartId'], $userItems);
-        $this->deleteCartById((int)$guestCart['cartId']);
+        $this->redis->del(self::GUEST_KEY_PREFIX . $guestId);
         $this->clearGuestCookie();
     }
 
@@ -88,74 +140,66 @@ class CartRepository implements CartRepositoryInterface {
         $this->setGuestCookie($this->generateUuidV4());
     }
 
-    private function getCurrentCartRow(): ?array
-    {
-        $user = $_SESSION['user'] ?? null;
-        if ($user && isset($user['userId'])) {
-            return $this->getCartByUserId((int)$user['userId']);
-        }
 
-        return $this->getGuestCartRow();
-    }
-
-    private function getCartByUserId(int $userId): ?array
+    private function ensureCartForUser(int $userId): int
     {
-        $stmt = $this->db->prepare('SELECT * FROM carts WHERE user_id = ? LIMIT 1');
+        $stmt = $this->db->prepare('SELECT cartId FROM carts WHERE user_id = ? LIMIT 1');
         $stmt->execute([$userId]);
         $cart = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($cart) {
-            return $cart;
+            return (int)$cart['cartId'];
         }
 
-        $insert = $this->db->prepare('INSERT INTO carts (user_id, guest_id, items) VALUES (?, NULL, ?)');
-        $insert->execute([$userId, json_encode([], JSON_UNESCAPED_UNICODE)]);
+        $insert = $this->db->prepare('INSERT INTO carts (user_id) VALUES (?)');
+        $insert->execute([$userId]);
 
-        return $this->getCartByUserId($userId);
+        return (int)$this->db->lastInsertId();
     }
 
-    private function getGuestCartRow(): ?array
+    private function getItemsByCartId(int $cartId): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT ci.product_id, ci.quantity, ci.price, ci.currency, p.name
+             FROM cart_items ci
+             JOIN products p ON p.productId = ci.product_id
+             WHERE ci.cart_id = ?'
+        );
+        $stmt->execute([$cartId]);
+
+        $items = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $items[(string)$row['product_id']] = [
+                'productId' => (int)$row['product_id'],
+                'name'      => $row['name'],
+                'price'     => (float)$row['price'],
+                'currency'  => $row['currency'],
+                'quantity'  => (int)$row['quantity'],
+            ];
+        }
+
+        return $items;
+    }
+
+    private function getGuestItems(): array
+    {
+        return $this->getGuestItemsByGuestId($this->ensureGuestId());
+    }
+
+    private function getGuestItemsByGuestId(string $guestId): array
+    {
+        $raw = $this->redis->get(self::GUEST_KEY_PREFIX . $guestId);
+        return $raw ? $this->decodeItems($raw) : [];
+    }
+
+    private function saveGuestItems(array $items): void
     {
         $guestId = $this->ensureGuestId();
-        return $this->getCartByGuestId($guestId);
-    }
-
-    private function getCartByGuestId(string $guestId): ?array
-    {
-        $stmt = $this->db->prepare('SELECT * FROM carts WHERE guest_id = ? LIMIT 1');
-        $stmt->execute([$guestId]);
-        $cart = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($cart) {
-            return $cart;
-        }
-
-        $insert = $this->db->prepare('INSERT INTO carts (user_id, guest_id, items) VALUES (NULL, ?, ?)');
-        $insert->execute([$guestId, json_encode([], JSON_UNESCAPED_UNICODE)]);
-
-        return $this->getCartByGuestId($guestId);
-    }
-
-    private function saveItemsToCurrentCart(array $items): void
-    {
-        $cart = $this->getCurrentCartRow();
-        if (!$cart) {
-            return;
-        }
-
-        $this->saveItemsToCartId((int)$cart['cartId'], $items);
-    }
-
-    private function saveItemsToCartId(int $cartId, array $items): void
-    {
-        $stmt = $this->db->prepare('UPDATE carts SET items = ? WHERE cartId = ?');
-        $stmt->execute([$this->encodeItems($items), $cartId]);
-    }
-
-    private function deleteCartById(int $cartId): void
-    {
-        $stmt = $this->db->prepare('DELETE FROM carts WHERE cartId = ?');
-        $stmt->execute([$cartId]);
+        $this->redis->setex(
+            self::GUEST_KEY_PREFIX . $guestId,
+            self::COOKIE_LIFETIME,
+            $this->encodeItems($items)
+        );
     }
 
     private function ensureGuestId(): string
