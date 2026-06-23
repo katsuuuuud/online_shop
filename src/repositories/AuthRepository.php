@@ -5,6 +5,7 @@ class AuthRepository implements AuthRepositoryInterface
     public function register(string $name, string $email, string $phone, string $address, string $password): int
     {
         $pdo = Database::getInstance();
+        // TODO можно занести sql инъекцию - добавь prepared statements
         $stmt = $pdo->prepare('INSERT INTO users (name, email, phone, address, password) VALUES (?, ?, ?, ?, ?)');
         $stmt->execute([
             $name,
