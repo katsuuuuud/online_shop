@@ -2,11 +2,7 @@
 
 class ProfileController
 {
-    public function __construct(
-        private AuthRepositoryInterface  $authRepository,
-        private OrderRepositoryInterface $orderRepository,
-    ) {}
-
+    public function __construct(private ProfileService $profileService) {}
 
     public function apiUpdate(array $body): void
     {
@@ -18,7 +14,7 @@ class ProfileController
             return;
         }
 
-        $result = $this->update($body, $user);
+        $result = $this->profileService->updateProfile($body, $user);
 
         if (!$result['success']) {
             http_response_code(422);
@@ -29,7 +25,6 @@ class ProfileController
         echo json_encode(['data' => $_SESSION['user']]);
     }
 
-
     public function show(): void
     {
         $user = $_SESSION['user'] ?? null;
@@ -39,10 +34,9 @@ class ProfileController
             return;
         }
 
-        $tab    = $_GET['tab'] ?? 'info';
-        $orders = $this->orderRepository->getOrdersByCustomer(
-            (int)($user['id'] ?? $user['userId'] ?? 0)
-        );
+        $tab     = $_GET['tab'] ?? 'info';
+        $profile = $this->profileService->getProfileData($user);
+        $orders  = $profile['orders'];
 
         require __DIR__ . '/../../views/profile.php';
     }
@@ -56,7 +50,7 @@ class ProfileController
             return;
         }
 
-        $result = $this->update($post, $user);
+        $result = $this->profileService->updateProfile($post, $user);
         $tab    = $post['tab'] ?? 'info';
 
         if (!$result['success']) {
@@ -65,38 +59,5 @@ class ProfileController
         }
 
         header('Location: /profile?tab=' . urlencode($tab) . '&success=' . urlencode($result['message']));
-    }
-
-
-    private function update(array $data, array $user): array
-    {
-        $name    = trim((string)($data['name']    ?? ''));
-        $phone   = trim((string)($data['phone']   ?? ''));
-        $address = trim((string)($data['address'] ?? ''));
-        $userId  = (int)($user['id'] ?? $user['userId'] ?? 0);
-
-        if ($name === '' || $phone === '' || $address === '') {
-            return ['success' => false, 'message' => 'Все поля профиля должны быть заполнены.'];
-        }
-
-        if ($userId <= 0) {
-            return ['success' => false, 'message' => 'Не удалось определить пользователя.'];
-        }
-
-        try {
-            $this->authRepository->updateProfile($userId, $name, $phone, $address);
-        } catch (Throwable $e) {
-            return ['success' => false, 'message' => 'Ошибка обновления профиля: ' . $e->getMessage()];
-        }
-
-        $updatedUser = $this->authRepository->findById($userId);
-        if ($updatedUser) {
-            unset($updatedUser['password']);
-            $_SESSION['user'] = $updatedUser;
-        } else {
-            $_SESSION['user'] = array_merge($user, compact('name', 'phone', 'address'));
-        }
-
-        return ['success' => true, 'message' => 'Профиль успешно обновлён.'];
     }
 }

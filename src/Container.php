@@ -10,15 +10,21 @@ class Container
 
     public function __construct()
     {
-        $authRepo    = new AuthRepository();
-        $catalogRepo = new CatalogRepository();
-        $cartRepo    = new CartRepository();
-        $orderRepo   = new OrderRepository();
+        $authRepo      = new AuthRepository();
+        $catalogRepo   = new CatalogRepository();
+        $cartRepo      = new CartRepository();
+        $orderRepo     = new OrderRepository();
 
-        $this->catalogController = new CatalogController($catalogRepo);
-        $this->cartController    = new CartController($cartRepo, $catalogRepo);
-        $this->orderController   = new OrderController(new OrderService($orderRepo, $cartRepo));
-        $this->profileController = new ProfileController($authRepo, $orderRepo);
-        $this->authController    = new AuthController($authRepo, $cartRepo);
+        $authService    = new AuthService($authRepo, $cartRepo);
+        $cartService    = new CartService($cartRepo, $catalogRepo);
+        $catalogService = new CatalogService($catalogRepo);
+        $profileService = new ProfileService($authRepo, $orderRepo);
+        $orderService   = new OrderService($orderRepo, $cartRepo);
+
+        $this->catalogController = new CatalogController($catalogService);
+        $this->cartController    = new CartController($cartService);
+        $this->orderController   = new OrderController($orderService);
+        $this->profileController = new ProfileController($profileService);
+        $this->authController    = new AuthController($authService);
     }
 }

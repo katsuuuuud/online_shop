@@ -2,74 +2,50 @@
 
 class CartController
 {
-    public function __construct(
-        private CartRepositoryInterface    $repo,
-        private CatalogRepositoryInterface $catalogRepo,
-    ) {}
-
+    public function __construct(private CartService $cartService) {}
 
     public function apiIndex(): void
     {
-        $items = $this->repo->getItems();
-        $this->jsonOk(['data' => array_values($items), 'total' => $this->calcTotal($items)]);
+        $result = $this->cartService->getCart();
+        $this->jsonOk(['data' => $result['data'], 'total' => $result['total']]);
     }
 
     public function apiAdd(array $body): void
     {
-        $productId = (int)($body['productId'] ?? 0);
-        $quantity  = max(1, (int)($body['quantity'] ?? 1));
+        $result = $this->cartService->addItem($body);
 
-        if ($productId <= 0) {
-            $this->jsonFail('productId обязателен', 422);
+        if (!$result['success']) {
+            $this->jsonFail($result['message'], $result['status'] ?? 422);
             return;
         }
-
-        $product = $this->catalogRepo->getProductById($productId);
-        if (!$product) {
-            $this->jsonFail('Товар не найден', 404);
-            return;
-        }
-
-        $priceData = $this->catalogRepo->getPriceByProduct($productId);
-        $price     = $priceData ? (float)$priceData['price']    : 0.0;
-        $currency  = $priceData ? $priceData['currency']        : 'RUB';
-
-        $items = $this->repo->addItem($productId, $product['name'], $price, $currency, $quantity);
 
         http_response_code(201);
-        $this->jsonOk(['data' => array_values($items), 'total' => $this->calcTotal($items)]);
+        $this->jsonOk(['data' => $result['data'], 'total' => $result['total']]);
     }
 
     public function apiRemove(string $path): void
     {
-        $productId = (int)substr($path, strlen('/api/cart/'));
+        $result = $this->cartService->removeItem($path);
 
-        if ($productId <= 0) {
-            $this->jsonFail('Неверный productId', 422);
+        if (!$result['success']) {
+            $this->jsonFail($result['message'], $result['status'] ?? 422);
             return;
         }
 
-        $items = $this->repo->removeItem($productId);
-        $this->jsonOk(['data' => array_values($items), 'total' => $this->calcTotal($items)]);
+        $this->jsonOk(['data' => $result['data'], 'total' => $result['total']]);
     }
 
     public function apiClear(): void
     {
-        $this->repo->clear();
-        $this->jsonOk(['data' => [], 'total' => 0]);
+        $result = $this->cartService->clearCart();
+        $this->jsonOk(['data' => $result['data'], 'total' => $result['total']]);
     }
-
 
     public function show(): void
     {
-        $items = $this->repo->getItems();
+        $cartData = $this->cartService->getCartView();
+        $items    = $cartData['items'];
         require __DIR__ . '/../../views/cart.php';
-    }
-
-
-    private function calcTotal(array $items): float
-    {
-        return array_sum(array_map(fn($i) => $i['price'] * $i['quantity'], $items));
     }
 
     private function jsonOk(array $payload): void
