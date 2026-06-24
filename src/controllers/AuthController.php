@@ -130,6 +130,7 @@ class AuthController
 
     private function register(array $data): array
     {
+        // TODO: сделай здесь DTO
         $name     = trim((string)($data['name']     ?? ''));
         $email    = trim((string)($data['email']    ?? ''));
         $phone    = trim((string)($data['phone']    ?? ''));
@@ -160,6 +161,7 @@ class AuthController
         $this->cartRepository->mergeGuestCartToUser((int)$user['userId'], $_COOKIE[CartRepository::GUEST_COOKIE] ?? null);
         $_SESSION['user'] = $user;
 
+        // TODO много логики в контроллере - вынеси в action
         return ['success' => true, 'message' => 'Регистрация прошла успешно.', 'next' => $next];
     }
 
